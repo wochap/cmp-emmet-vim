@@ -64,50 +64,7 @@ local function get_file_type(flg)
     local types = require('cmp_emmet_vim.filetype_functions').from_pos_or_filetype()
     local type = types[1]
 
-    if type == 'htmlTagName' then
-        type = ''
-    end
-    if type:match('^mkdSnippet') then
-        type = type:sub(11):lower()
-    end
-
-    if type:match('^css') then
-        type = 'styled'
-    elseif type:match('^html') then
-        type = 'html'
-    elseif type:match('^jsx') then
-        type = 'jsx'
-    elseif (type:match('^js%w') or type:match('^javascript')) and not vim.bo.filetype:match('jsx') then
-        type = 'jsx'
-    elseif type:match('^tsx') then
-        type = 'tsx'
-    elseif type:match('^ts%w') or type:match('^typescript') then
-        type = 'tsx'
-    elseif type:match('^xml') then
-        type = 'xml'
-    elseif type == 'styledEmmetAbbreviation' then
-        type = 'styled'
-    else
-        local emmet_settings = {} -- replace with your actual settings table
-        local types = vim.split(vim.bo.filetype, '.')
-        for _, part in ipairs(types) do
-            if emmet_settings[part] then
-                type = part
-                break
-            end
-            local base = getBaseType(part) -- replace with your actual function call
-            if base ~= '' then
-                if flg then
-                    type = vim.bo.filetype
-                else
-                    type = base
-                end
-                break
-            end
-        end
-    end
-
-    return #type == 0 and 'html' or type
+    return type
 end
 
 ---Gets the emmet "abbr"
