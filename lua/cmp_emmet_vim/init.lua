@@ -32,24 +32,82 @@ source._validate_options = function(_, params)
     return opts
 end
 
+local function getBaseType(type)
+    local emmet_settings = {} -- replace with your actual settings table
+
+    if not emmet_settings[type] then
+        return ''
+    end
+    if not emmet_settings[type]['extends'] then
+        return type
+    end
+
+    local extends = emmet_settings[type]['extends']
+    local ext = ''
+
+    if type(extends) == 'string' then
+        ext = vim.split(extends, '%s*,%s*')[1]
+    else
+        ext = extends[1]
+    end
+
+    if type ~= ext then
+        return getBaseType(ext)
+    end
+
+    return ''
+end
+
 ---Returns the filetype at the cursor, using tree-sitter if available
 ---@return unknown
-local function get_file_type()
-    local ok, parser = pcall(vim.treesitter.get_parser)
-    if not ok then
-        return vim.bo.filetype
+local function get_file_type(flg)
+    local types = require('cmp-emmet-vim.filetype_functions').from_pos_or_filetype()
+    local type = types[1]
+
+    if type == 'htmlTagName' then
+        type = ''
     end
-    local cursor = vim.api.nvim_win_get_cursor(0)
-    local range_parser = parser:language_for_range({ cursor[1] - 1, cursor[2], cursor[1] - 1, cursor[2] })
-    local lang = range_parser:lang()
-    if lang == 'html' then
-        local ts_utils = require('nvim-treesitter.ts_utils')
-        local node = ts_utils.get_node_at_cursor()
-        if node and node:type() == 'style_element' then
-            return 'css'
+    if type:match('^mkdSnippet') then
+        type = type:sub(11):lower()
+    end
+
+    if type:match('^css') then
+        type = 'styled'
+    elseif type:match('^html') then
+        type = 'html'
+    elseif type:match('^jsx') then
+        type = 'jsx'
+    elseif (type:match('^js%w') or type:match('^javascript')) and not vim.bo.filetype:match('jsx') then
+        type = 'jsx'
+    elseif type:match('^tsx') then
+        type = 'tsx'
+    elseif type:match('^ts%w') or type:match('^typescript') then
+        type = 'tsx'
+    elseif type:match('^xml') then
+        type = 'xml'
+    elseif type == 'styledEmmetAbbreviation' then
+        type = 'styled'
+    else
+        local emmet_settings = {} -- replace with your actual settings table
+        local types = vim.split(vim.bo.filetype, '.')
+        for _, part in ipairs(types) do
+            if emmet_settings[part] then
+                type = part
+                break
+            end
+            local base = getBaseType(part) -- replace with your actual function call
+            if base ~= '' then
+                if flg then
+                    type = vim.bo.filetype
+                else
+                    type = base
+                end
+                break
+            end
         end
     end
-    return lang
+
+    return #type == 0 and 'html' or type
 end
 
 ---Gets the emmet "abbr"
