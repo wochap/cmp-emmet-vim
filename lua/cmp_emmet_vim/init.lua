@@ -61,7 +61,7 @@ end
 ---Returns the filetype at the cursor, using tree-sitter if available
 ---@return unknown
 local function get_file_type(flg)
-    local types = require('filetype_functions').from_pos_or_filetype()
+    local types = require('cmp_emmet_vim.filetype_functions').from_pos_or_filetype()
     local type = types[1]
 
     if type == 'htmlTagName' then
